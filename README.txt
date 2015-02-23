@@ -5,22 +5,26 @@ Chien-Ju Ho
 Bo Waggoner  <bwaggoner@fas.harvard.edu>
 
 
+-----------------------------------------
+-- Overview
+Using the MNIST handwritten digit dataset.
+Pairs (datapoint, cost) arrive one by one.
+The mechanism posts a price for that datapoint;
+if higher than the cost, it pays the cost and obtains
+the datapoint.
+There is a budget constraint B.
+After all the training data has arrived, the mechanism
+outputs a hypothesis h, whose error rate is measured on
+the test set.
+
+
 ------------------------------------------
 -- Prerequisites
 
-- python2.7.
+- python 2.7
 - numpy
-- pandas (version 15)
-- scikit-learn (for downloading the data set conveniently)
+- scipy and scikit-learn (for downloading the data set conveniently)
 - matplotlib for plotting results of simulations
-
-Note for linux: some package managers have outdated versions of
-pandas that are not compatible with this code.
-The easiest way to get a recent version is probably to install via e.g.
-$ apt-get install python-pip
-$ pip install numpy
-$ pip install pandas
-$ pip install scikit-learn
 
 
 -----------------------------------------
@@ -28,12 +32,14 @@ $ pip install scikit-learn
 
 $ python run.py
 
+Manually edit the file "run.py" to control how many trials, the parameters, etc.
 The first time you run it, downloads the MNIST training dataset to ./mldata/mnist-original.mat
 After running, writes the results to the file "plot.py".
 
 $ python plot.py
 
 visualizes the results.
+
 
 -----------------------------------------
 -- Overview of the files
@@ -55,5 +61,5 @@ Mechanisms:
 
 Cost-generating:
   -- implementing methods normalize(num_examples[]), draw_cost(label)
-	unif_costgen.py: costs are uniform [0,1] marginal. Can specify some labels as "expensive" and others as "cheap", and then expensive label costs are uniform [a,1] and cheap labels uniform [0,a] for some a.
-	bernoulli_costgen.py: costs are free with probability 1-p and cost 1 with probability p. Can specify some labels as expensive and others as cheap, and then expensive labels will cost 1 when possible subject to the (p,1-p) distribution.
+  unif_costgen.py: costs are uniform [0,1] marginal. Can specify some labels as "expensive" and others as "cheap", and then expensive label costs are uniform [a,1] and cheap labels uniform [0,a] for some a.
+  bernoulli_costgen.py: costs are free with probability 1-p and cost 1 with probability p. Can specify some labels as expensive and others as cheap, and then expensive labels will cost 1 when possible subject to the (p,1-p) distribution.

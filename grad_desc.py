@@ -23,7 +23,7 @@ class GradientDescent(object):
 		# num_features = length of the x vector
 		# pos_labels   = list of digits in [0,9] to label positively (others negatively)
 		self.num_features = num_features
-		self.binarized_labels = [1 if l in pos_labels else -1 for l in range(10)]
+		self.binarized_labels = [1.0 if l in pos_labels else -1.0 for l in range(10)]
 		self.reset(eta)
 		super(GradientDescent, self).__init__()
 

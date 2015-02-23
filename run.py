@@ -1,5 +1,4 @@
 import sys
-import pandas as pd
 from sklearn.datasets import fetch_mldata
 import random
 import numpy as np 
@@ -59,21 +58,19 @@ costgens = [UnifCostGen(gen_seed()),
             BernoulliCostGen(gen_seed(), p=0.2),
 					  BernoulliCostGen(gen_seed(), p=0.2, expensive=EXPENSIVE)]
 
+
 #--------------------------------------------------------------
 # Useful method
 
-def split_dataset(dset):
+def split_dataset(Xlist, Ylist):
 	# divide the dataset into train and test
-	# using some fancy python pandas slicing,
-	# but eventually converting everything into a numpy array
-	num_train_points = int(len(dset) * TRAIN_FRACTION)
-	trainpoints = random.sample(dset.index,num_train_points)
-	testpoints = dset.index.difference(trainpoints)
-
-	Xtrain = np.array(dset.ix[trainpoints,FEATURES])
-	Xtest = np.array(dset.ix[testpoints,FEATURES])
-	Ytrain = np.array(dset.ix[trainpoints,'label'])
-	Ytest = np.array(dset.ix[testpoints,'label'])
+	num_train_points = int(len(Xlist) * TRAIN_FRACTION)
+	indices = range(len(Xlist))
+	random.shuffle(indices)
+	Xtrain = [Xlist[i] for i in indices[0:num_train_points]]
+	Ytrain = [Ylist[i] for i in indices[0:num_train_points]]
+	Xtest  = [Xlist[i] for i in indices[num_train_points:-1]]
+	Ytest  = [Ylist[i] for i in indices[num_train_points:-1]]
 	return (Xtrain,Ytrain,Xtest,Ytest)
 
 
@@ -85,21 +82,13 @@ random.seed(my_seed)
 
 print "Loading data (if mldata/mnist-original.mat does not yet exist, will download it)..."
 mnist = fetch_mldata('MNIST original', data_home = "./")
-digits = pd.DataFrame(data={('pixel%i' % ind) : mnist.data[:,ind] 
-		for ind in range(mnist.data.shape[1])})
-#digits['label'] = map(int,mnist.target)  # labels are 2. for an image of 2, etc
-digits['label'] = mnist.target  # labels are 2. for an image of 2, etc
-
-digits = digits.ix[digits.label.isin(INCLUDE)]
-labels = map(int, np.array(digits.ix[digits.index,'label']))  # labels are 0,...,9
+print "...loaded."
+# filter for the labels we want
+Xlist = [mnist.data[i] for i in xrange(len(mnist.data)) if int(mnist.target[i]) in INCLUDE]
+Ylist = [int(y) for y in mnist.target if int(y) in INCLUDE]
 num_examples = [0]*10
-for y in labels:
-	num_examples[y] += 1
-
-
-digits = pd.read_csv("../../codedata/train.csv")
-
-print "Loaded."
+for y in Ylist:
+	num_examples[y] += 1    # labels are 0,...,9
 
 # save average error and average squared error (for calculating sample variance)
 errs = [[[0.0]*len(budgets) for c in cost_names] for m in mech_names]
@@ -107,7 +96,7 @@ squared_errs = [[[0.0]*len(budgets) for c in cost_names] for m in mech_names]
 
 for trial in xrange(TRIALS):
 	print "TRIAL " + str(trial)
-	(Xtrain,Ytrain,Xtest,Ytest) = split_dataset(digits)
+	(Xtrain,Ytrain,Xtest,Ytest) = split_dataset(Xlist, Ylist)
 	T = len(Xtrain)
 	num_features = len(Xtrain[0])
 	avg_data_norm = np.apply_along_axis(np.linalg.norm, 1, Xtrain).mean()
@@ -126,6 +115,8 @@ for trial in xrange(TRIALS):
 
 # ----------------------------------------------------
 # writing out data
+# note nothing below here is actually run in this script,
+# it is all just written to OUTFILE
 
 
 # write out the data into a python file that plots it
@@ -138,7 +129,7 @@ for s in ["my_seed", "TRIALS", "INCLUDE", "POS_LABELS", "EXPENSIVE", "CHEAP", "b
 	try:
 		f.write(s + " = " + str(eval(s)) + "\n")
 	except:
-		pass  # the idea is to protect you from losing the data just because one of the above was not defined
+		pass  # if there was some error, try to keep going so we do not lose data
 
 f.write("""
 def stddev(mi,ci,bi):
